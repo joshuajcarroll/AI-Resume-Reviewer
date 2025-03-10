@@ -39,7 +39,7 @@ export default async function handler(
           Bucket: process.env.AWS_BUCKET_NAME as string,
           Key: `resumes/${file.originalname}`,
           Body: file.buffer,
-          ContentType: file.mimetype,
+          ContentType: file.mimetypes,
         };
 
         // Upload to S3
