@@ -14,6 +14,9 @@ model Resume {
   feedback     String?  // AI-generated feedback for resume improvement
   matchScore   Int?     // Score based on the match with a job description
   createdAt    DateTime @default(now()) // Timestamp for when the resume was uploaded
+
+  // Relations
+  resumeJobMatches ResumeJobMatch[]
 }
 
 model JobDescription {
@@ -21,6 +24,9 @@ model JobDescription {
   title       String   // Title of the job (e.g., "Software Engineer")
   description String   // Full job description
   createdAt   DateTime @default(now()) // Timestamp for when the job description was created
+
+  // Relations
+  resumeJobMatches ResumeJobMatch[]
 }
 
 model ResumeJobMatch {
