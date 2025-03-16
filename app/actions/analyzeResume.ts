@@ -1,8 +1,10 @@
 "use server";
 
-import { Configuration, OpenAIApi, ChatCompletionRequestMessage } from "openai";
+import Configuration, { OpenAI } from "openai";
+import ChatCompletionRequestMessage from "openai";
 
-const openai = new OpenAIApi(new Configuration({ apiKey: process.env.OPENAI_API_KEY! }));
+const configuration = new Configuration({ apiKey: process.env.OPENAI_API_KEY! });
+const openai = new OpenAI(configuration);
 
 export async function analyzeResume(text: string): Promise<string> {
   const messages: ChatCompletionRequestMessage[] = [

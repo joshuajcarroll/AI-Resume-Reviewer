@@ -1,25 +1,35 @@
 "use client"; // Add this directive at the top
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/router";
+//import { useRouter } from "next/navigation";
+
+interface Resume {
+  id: string;
+  fileUrl: string;
+}
+
+interface JobDescription {
+  id: string;
+  description: string;
+}
 
 const Dashboard = () => {
-  const [resumes, setResumes] = useState([]);
-  const [jobDescriptions, setJobDescriptions] = useState([]);
+  const [resumes, setResumes] = useState<Resume[]>([]);
+  const [jobDescriptions, setJobDescriptions] = useState<JobDescription[]>([]);
   const [feedback, setFeedback] = useState<string | null>(null);
 
-  const router = useRouter();
+  //const router = useRouter();
 
   useEffect(() => {
     // Fetch uploaded resumes and job descriptions from Supabase or your backend
     const fetchData = async () => {
       try {
         const responseResumes = await fetch("/api/resumes"); // Adjust with your real endpoint
-        const resumesData = await responseResumes.json();
+        const resumesData: Resume[] = await responseResumes.json();
         setResumes(resumesData);
 
         const responseJobDescriptions = await fetch("/api/jobDescriptions"); // Adjust with your real endpoint
-        const jobDescriptionsData = await responseJobDescriptions.json();
+        const jobDescriptionsData: JobDescription[] = await responseJobDescriptions.json();
         setJobDescriptions(jobDescriptionsData);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -60,7 +70,7 @@ const Dashboard = () => {
             <p className="text-gray-600">No resumes uploaded yet.</p>
           ) : (
             <ul className="space-y-4">
-              {resumes.map((resume: any) => (
+              {resumes.map((resume) => (
                 <li key={resume.id} className="bg-gray-50 p-4 rounded-lg shadow-sm">
                   <p className="text-gray-700">{resume.fileUrl}</p>
                 </li>
@@ -76,7 +86,7 @@ const Dashboard = () => {
             <p className="text-gray-600">No job descriptions available.</p>
           ) : (
             <ul className="space-y-4">
-              {jobDescriptions.map((job: any) => (
+              {jobDescriptions.map((job) => (
                 <li key={job.id} className="bg-gray-50 p-4 rounded-lg shadow-sm">
                   <p className="text-gray-700">{job.description}</p>
                 </li>
@@ -90,9 +100,9 @@ const Dashboard = () => {
           <h2 className="text-xl font-semibold text-gray-800 mb-4">Resume to Job Match</h2>
           {resumes.length > 0 && jobDescriptions.length > 0 ? (
             <div className="space-y-4">
-              {resumes.map((resume: any) => (
+              {resumes.map((resume) => (
                 <div key={resume.id}>
-                  {jobDescriptions.map((job: any) => (
+                  {jobDescriptions.map((job) => (
                     <div key={job.id} className="bg-white p-4 rounded-lg shadow-sm mb-4">
                       <button
                         onClick={() =>

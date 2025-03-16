@@ -1,44 +1,41 @@
 "use server";
 
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import prisma from "@/lib/prisma";
-import { extractTextFromResume } from "@/lib/textract";
-import { analyzeResume } from "@/lib/openai";
+import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { v4 as uuidv4 } from "uuid";
+import { writeFile } from "fs/promises";
 
-const s3 = new S3Client({ region: "us-east-1" });
+const s3 = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+  },
+});
 
-interface UploadResponse {
-  success?: boolean;
-  error?: string;
-  fileUrl?: string;
-  feedback?: string;
-}
+export async function uploadResume(formData: FormData) {
+  const file = formData.get("resume") as File;
+  if (!file) return { success: false, error: "No file uploaded." };
 
-export async function uploadResume(formData: FormData): Promise<UploadResponse> {
-  const file = formData.get("resume") as File | null;
-  if (!file) return { error: "No file provided" };
+  const fileExtension = file.name.split(".").pop();
+  const fileName = `${uuidv4()}.${fileExtension}`;
 
   try {
-    const fileBuffer = await file.arrayBuffer();
-    const fileName = `resumes/${file.name}`;
+    // Convert File to Buffer
+    const fileBuffer = Buffer.from(await file.arrayBuffer());
 
-    await s3.send(new PutObjectCommand({
-      Bucket: process.env.AWS_BUCKET_NAME!,
-      Key: fileName,
-      Body: Buffer.from(fileBuffer),
-      ContentType: file.type,
-    }));
+    // Upload to S3
+    await s3.send(
+      new PutObjectCommand({
+        Bucket: process.env.AWS_S3_BUCKET_NAME,
+        Key: fileName,
+        Body: fileBuffer,
+        ContentType: file.type,
+      })
+    );
 
-    const fileUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.amazonaws.com/${fileName}`;
-    const extractedText = await extractTextFromResume(fileUrl);
-    const feedback = await analyzeResume(extractedText);
-
-    await prisma.resume.create({
-      data: { userEmail: "test@example.com", fileUrl, extractedText, feedback },
-    });
-
-    return { success: true, fileUrl, feedback };
+    return { success: true, fileName };
   } catch (error) {
-    return { error: "Upload failed. Please try again later." };
+    console.error("S3 Upload Error:", error);
+    return { success: false, error: "File upload failed." };
   }
 }
