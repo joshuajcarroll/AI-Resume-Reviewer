@@ -8,22 +8,42 @@ export default function ResumeUploader() {
   const [jobDescription, setJobDescription] = useState<string>("");
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [fileUrl, setFileUrl] = useState<string | null>(null);
+
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
   const handleResumeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
-      setResume(event.target.files[0]);
+      const file = event.target.files[0];
+
+      // Validate file size
+      if (file.size > MAX_FILE_SIZE) {
+        setMessage("❌ File size should not exceed 5MB.");
+        return;
+      }
+
+      // Validate file type
+      const allowedTypes = ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
+      if (!allowedTypes.includes(file.type)) {
+        setMessage("❌ Only PDF or DOCX files are allowed.");
+        return;
+      }
+
+      setResume(file);
+      setMessage(null);
     }
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!resume || !jobDescription) {
-      setMessage("Please upload a resume and enter a job description.");
+      setMessage("❌ Please upload a resume and enter a job description.");
       return;
     }
 
     setUploading(true);
     setMessage(null);
+    setFileUrl(null);
 
     const formData = new FormData();
     formData.append("resume", resume);
@@ -32,7 +52,8 @@ export default function ResumeUploader() {
     const result = await uploadResume(formData);
 
     if (result.success) {
-      setMessage(`✅ Upload successful! File: ${result.fileName}`);
+      setMessage(`✅ Upload successful!`);
+      setFileUrl(result.fileUrl || null);
     } else {
       setMessage(result.error || "❌ Upload failed. Please try again.");
     }
@@ -79,6 +100,12 @@ export default function ResumeUploader() {
         {message && (
           <p className={`mt-4 text-center font-medium ${message.includes("✅") ? "text-green-600" : "text-red-600"}`}>
             {message}
+          </p>
+        )}
+
+        {fileUrl && (
+          <p className="mt-4 text-center text-blue-600">
+            ✅ <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="underline">View Uploaded Resume</a>
           </p>
         )}
       </div>
