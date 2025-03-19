@@ -1,21 +1,32 @@
 "use server";
 
-import Configuration, { OpenAI } from "openai";
-import ChatCompletionRequestMessage from "openai";
+import OpenAI from "openai";
+import { extractTextFromResume } from "./extractText";
 
-const configuration = new Configuration({ apiKey: process.env.OPENAI_API_KEY! });
-const openai = new OpenAI(configuration);
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY!,
+});
 
-export async function analyzeResume(text: string): Promise<string> {
-  const messages: ChatCompletionRequestMessage[] = [
-    { role: "system", content: "Analyze this resume and suggest improvements." },
-    { role: "user", content: text },
-  ];
+export async function analyzeResume(fileName: string, jobDescription: string): Promise<string> {
+  try {
+    // Step 1: Extract text using Textract
+    const resumeText = await extractTextFromResume(fileName);
+    if (!resumeText || resumeText.startsWith("Error")) {
+      return "Failed to extract text from resume.";
+    }
 
-  const response = await openai.createChatCompletion({
-    model: "gpt-4",
-    messages,
-  });
+    // Step 2: Send extracted text to OpenAI for analysis
+    const response = await openai.chat.completions.create({
+      model: "gpt-4",
+      messages: [
+        { role: "system", content: "You are a professional resume analyst. Compare the resume against the provided job description and suggest improvements." },
+        { role: "user", content: `Resume:\n${resumeText}\n\nJob Description:\n${jobDescription}` },
+      ],
+    });
 
-  return response.data.choices[0]?.message?.content ?? "No feedback available.";
+    return response.choices[0]?.message?.content ?? "No feedback available.";
+  } catch (error) {
+    console.error("OpenAI API Error:", error);
+    return "Error analyzing resume.";
+  }
 }
