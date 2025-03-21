@@ -1,11 +1,8 @@
 "use server";
 
 import { TextractClient, StartDocumentTextDetectionCommand, GetDocumentTextDetectionCommand } from "@aws-sdk/client-textract";
-import { S3Client } from "@aws-sdk/client-s3";
 
 const textract = new TextractClient({ region: process.env.AWS_REGION! });
-const s3 = new S3Client({ region: process.env.AWS_REGION! });
-
 export async function extractTextFromResume(fileName: string): Promise<string> {
   try {
     const params = {
