@@ -4,6 +4,13 @@ import { useState } from "react";
 import { uploadResume } from "@/app/actions/uploadResume";
 import { startTextractJob } from "../actions/startTextractJob";
 import { checkTextractJob } from "@/app/actions/checkTextractJob";
+import { uploadJobDescription } from "@/app/actions/uploadJobDescription";
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 export default function ResumeUploader() {
   const [resume, setResume] = useState<File | null>(null);
@@ -30,30 +37,52 @@ export default function ResumeUploader() {
 
     const formData = new FormData();
     formData.append("resume", resume);
-    formData.append("jobDescription", jobDescription);
 
+    // Upload resume
     const uploadResult = await uploadResume(formData);
-
     if (!uploadResult.success) {
       setProgress("❌ Upload failed.");
       setUploading(false);
       return;
     }
 
-    setProgress("✅ Upload successful! Starting text extraction...");
-    if (!uploadResult.fileName) {
-      setProgress("❌ Upload failed: No file name returned.");
+    setProgress("✅ Resume uploaded! Retrieving user ID...");
+
+    // Get user ID from Supabase auth
+    const { data: user, error: authError } = await supabase.auth.getUser();
+    if (authError || !user?.user) {
+      setProgress("❌ Failed to retrieve user.");
       setUploading(false);
       return;
     }
-    const jobId = await startTextractJob(uploadResult.fileName);
 
+    const userId = user.user.id; // Ensure we have a valid user ID
+
+    setProgress("📄 Saving job description...");
+
+    // Upload job description separately
+    const jobUploadResult = await uploadJobDescription(jobDescription, userId);
+    if (!jobUploadResult.success) {
+      setProgress("❌ Failed to save job description.");
+      setUploading(false);
+      return;
+    }
+
+    setProgress("✅ Job description saved! Starting text extraction...");
+
+    // Start AWS Textract processing
+    if (!uploadResult.fileName) {
+      setProgress("❌ Upload failed. File name is missing.");
+      setUploading(false);
+      return;
+    }
+
+    const jobId = await startTextractJob(uploadResult.fileName);
     setProgress("📄 Processing document...");
 
-    // Poll for job completion
     let jobStatus = "IN_PROGRESS";
     while (jobStatus === "IN_PROGRESS") {
-      await new Promise((resolve) => setTimeout(resolve, 5000)); // Wait 5 sec
+      await new Promise((resolve) => setTimeout(resolve, 5000));
       const jobResult = await checkTextractJob(jobId);
       jobStatus = jobResult.status || "FAILED";
 

@@ -3,9 +3,9 @@
 import OpenAI from "openai";
 import { extractTextFromResume } from "./extractText";
 
-/*const openai = new OpenAI({
+const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY!,
-});*/
+});
 
 export async function analyzeResume(fileName: string, jobDescription: string): Promise<string> {
   try {
