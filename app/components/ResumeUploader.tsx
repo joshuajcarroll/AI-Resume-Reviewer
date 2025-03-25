@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { uploadResume } from "@/app/actions/uploadResume";
 import { startTextractJob } from "../actions/startTextractJob";
 import { checkTextractJob } from "@/app/actions/checkTextractJob";
@@ -17,7 +18,8 @@ export default function ResumeUploader() {
   const [jobDescription, setJobDescription] = useState<string>("");
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState<string | null>(null);
-  const [extractedText, setExtractedText] = useState<string | null>(null);
+  // Removed unused extractedText state
+  const router = useRouter(); // For redirection
 
   const handleResumeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
@@ -87,8 +89,12 @@ export default function ResumeUploader() {
       jobStatus = jobResult.status || "FAILED";
 
       if (jobStatus === "SUCCEEDED") {
-        setExtractedText(jobResult.extractedText);
+        // Removed setExtractedText as extractedText is no longer used
         setProgress("✅ Text extraction complete!");
+
+        // Redirect to ResultsPage with extracted text
+        router.push(`/results?feedback=${encodeURIComponent(jobResult.extractedText)}`);
+        return;
       } else if (jobStatus === "FAILED") {
         setProgress("❌ Extraction failed.");
         break;
@@ -135,13 +141,6 @@ export default function ResumeUploader() {
         </form>
 
         {progress && <p className="mt-4 text-center font-medium">{progress}</p>}
-
-        {extractedText && (
-          <div className="mt-6 p-4 bg-gray-100 rounded-lg">
-            <h2 className="text-lg font-semibold">Extracted Text</h2>
-            <p className="text-sm text-gray-700 whitespace-pre-wrap">{extractedText}</p>
-          </div>
-        )}
       </div>
     </div>
   );
