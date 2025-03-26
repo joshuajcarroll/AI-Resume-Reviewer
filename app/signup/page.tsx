@@ -1,17 +1,16 @@
 "use client";
 
 import { useState } from "react";
-//import { useRouter } from "next/navigation";
+//import { supabase } from "../supabaseClient"; // import supabase client
 
 const Signup = () => {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  //const router = useRouter();
+ // const [loading, setLoading] = useState(false);
+  //const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (event: React.FormEvent) => {
+  /*const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
     if (!email || !password || !confirmPassword) {
@@ -28,33 +27,33 @@ const Signup = () => {
     setError(null);
 
     try {
-      // Mock signup request, replace this with your API call
-      const response = await fetch("/api/signup", {
-        method: "POST",
-        body: JSON.stringify({ email, password }),
-        headers: { "Content-Type": "application/json" },
+      // Use Supabase's signUp method for user registration
+      const { user, error: signupError } = await supabase.auth.signUp({
+        email,
+        password,
       });
 
-      if (!response.ok) {
-        const data = await response.json();
-        setError(data.error || "Signup failed. Please try again.");
+      if (signupError) {
+        setError(signupError.message || "Signup failed. Please try again.");
       } else {
-        // On success, redirect to login page
-        //router.push("/login");
+        // On success, you can redirect the user or provide a confirmation message
+        // Example: router.push("/login");
+        // Or show a success message
+        setError("Signup successful! Please check your email for verification.");
       }
-    } catch  {
+    } catch (error) {
       setError("An error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
-  };
+  };*/
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <div className="bg-white shadow-lg rounded-2xl p-8 max-w-md w-full">
         <h1 className="text-2xl font-bold text-center text-gray-800 mb-6">Sign Up</h1>
         {error && <p className="text-red-600 text-center mb-4">{error}</p>}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form /*onSubmit={handleSubmit}*/ className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">Email</label>
             <input
