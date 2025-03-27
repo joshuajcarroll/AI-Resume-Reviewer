@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { supabase } from "../supabaseClient"; // Import Supabase client
 //import { useRouter } from "next/router";
 
 const Login = () => {
-  const [username, setUsername] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   //const router = useRouter();
@@ -22,20 +23,27 @@ const Login = () => {
     setError(null);
 
     try {
-      // Mock login request, replace this with your API call
-      const response = await fetch("/api/login", {
-        method: "POST",
-        body: JSON.stringify({ username, password }),
-        headers: { "Content-Type": "application/json" },
-      });
+      // Fetch user by username from Supabase
+      const { data: user, error: fetchError } = await supabase
+        .from("users")
+        .select("username, password")
+        .eq("username", username)
+        .single();
 
-      if (!response.ok) {
-        const data = await response.json();
-        setError(data.error || "Login failed. Please try again.");
-      } else {
-        // On success, redirect to dashboard or home page
-       // router.push("/dashboard");
+      if (fetchError || !user) {
+        setError("Invalid username or password.");
+        return;
       }
+
+      // Validate password (you should hash and compare server-side)
+      // For now, assuming plain-text comparison
+      if (password !== user.password) {
+        setError("Invalid username or password.");
+        return;
+      }
+
+      // On successful login
+      // router.push("/dashboard"); // Redirect user
     } catch {
       setError("An error occurred. Please try again.");
     } finally {
