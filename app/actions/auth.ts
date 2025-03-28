@@ -39,3 +39,37 @@ export async function signUpUser(username: string, password: string) {
 
   return { success: "Signup successful! You can now log in." };
 }
+
+
+export async function signInUser(username: string, password: string) {
+  if (!username || !password) {
+    return { error: "Username and password are required." };
+  }
+
+  // Fetch the user from the "users" table
+  const { data: user, error: fetchError } = await supabase
+    .from("users")
+    .select("username, password")
+    .eq("username", username)
+    .maybeSingle(); // Use maybeSingle() to handle no rows found
+
+  if (fetchError) {
+    console.error("Error fetching user:", fetchError); // Log the error
+    return { error: "Error fetching user." };
+  }
+
+  if (!user) {
+    return { error: "User not found. Please check your username." };
+  }
+
+  // Compare the entered password with the hashed password
+  const isPasswordValid = await bcrypt.compare(password, user.password);
+
+  if (!isPasswordValid) {
+    return { error: "Invalid password. Please try again." };
+  }
+
+  // Authentication successful
+  return { success: "Login successful!" };
+}
+
