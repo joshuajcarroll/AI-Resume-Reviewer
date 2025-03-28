@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "../supabaseClient"; // Import Supabase client
+import { signUpUser } from "../actions/auth"; // Import server action
 
 const Signup = () => {
   const [username, setUsername] = useState("");
@@ -9,6 +9,7 @@ const Signup = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -25,23 +26,18 @@ const Signup = () => {
 
     setLoading(true);
     setError(null);
+    setMessage(null);
 
-    try {
-      // Insert user into Supabase manually since Supabase auth requires email
-      const { error: signupError } = await supabase.from("users").insert([
-        { username, password },
-      ]);
+    // Call the server action to handle signup
+    const result = await signUpUser(username, password);
 
-      if (signupError) {
-        setError(signupError.message || "Signup failed. Please try again.");
-      } else {
-        setError("Signup successful! You can now log in.");
-      }
-    } catch {
-      setError("An error occurred. Please try again.");
-    } finally {
-      setLoading(false);
+    if (result.error) {
+      setError(result.error);
+    } else {
+      setMessage(result.success ?? null);
     }
+
+    setLoading(false);
   };
 
   return (
@@ -49,6 +45,8 @@ const Signup = () => {
       <div className="bg-white shadow-lg rounded-2xl p-8 max-w-md w-full">
         <h1 className="text-2xl font-bold text-center text-gray-800 mb-6">Sign Up</h1>
         {error && <p className="text-red-600 text-center mb-4">{error}</p>}
+        {message && <p className="text-green-600 text-center mb-4">{message}</p>}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">Username</label>
@@ -94,7 +92,7 @@ const Signup = () => {
 
         <div className="mt-4 text-center">
           <p className="text-gray-600">
-            Already have an account? {" "}
+            Already have an account?{" "}
             <a href="/login" className="text-blue-600 hover:underline">
               Log in
             </a>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "../supabaseClient"; // Import Supabase client
+import { supabase } from "@/lib/supabase"; // Import Supabase client
 //import { useRouter } from "next/router";
 
 const Login = () => {
