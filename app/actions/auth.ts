@@ -8,6 +8,21 @@ export async function signUpUser(username: string, password: string) {
     return { error: "Username and password are required." };
   }
 
+  // Check if the username already exists
+  const { data: existingUser, error: userCheckError } = await supabase
+    .from("users")
+    .select("id")
+    .eq("username", username)
+    .single();
+
+  if (userCheckError) {
+    return { error: userCheckError.message || "Failed to check username." };
+  }
+
+  if (existingUser) {
+    return { error: "Username is already taken." };
+  }
+
   // Hash the password before storing it
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
