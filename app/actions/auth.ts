@@ -9,18 +9,19 @@ export async function signUpUser(username: string, password: string) {
   }
 
   // Check if the username already exists
-  const { data: existingUser, error: userCheckError } = await supabase
+  const { data: existingUser, error: fetchError } = await supabase
     .from("users")
-    .select("id")
+    .select("username")
     .eq("username", username)
-    .single();
+    .maybeSingle(); // Use .maybeSingle() instead of .single()
 
-  if (userCheckError) {
-    return { error: userCheckError.message || "Failed to check username." };
+  if (fetchError) {
+    console.error("Error fetching existing user:", fetchError); // Log the detailed error
+    return { error: "Error checking username availability." };
   }
 
   if (existingUser) {
-    return { error: "Username is already taken." };
+    return { error: "Username is already taken. Please choose another one." };
   }
 
   // Hash the password before storing it

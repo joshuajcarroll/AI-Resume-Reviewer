@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation"; // Import useRouter for navigation
 import { signUpUser } from "../actions/auth"; // Import server action
 
 const Signup = () => {
@@ -10,6 +11,7 @@ const Signup = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const router = useRouter(); // Initialize useRouter
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -35,6 +37,10 @@ const Signup = () => {
       setError(result.error);
     } else {
       setMessage(result.success ?? null);
+      // Redirect to login page after successful signup
+      setTimeout(() => {
+        router.push("/login"); // Redirect to login
+      }, 2000); // Wait for 2 seconds before redirecting for better user experience
     }
 
     setLoading(false);
