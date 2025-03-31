@@ -2,6 +2,7 @@
 
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { v4 as uuidv4 } from "uuid";
+import { currentUser } from "@clerk/nextjs/server"; // ✅ Import currentUser()
 
 const s3 = new S3Client({
   region: process.env.AWS_REGION!,
@@ -12,6 +13,12 @@ const s3 = new S3Client({
 });
 
 export async function uploadResume(formData: FormData) {
+  // ✅ Get logged-in user from Clerk
+  const user = await currentUser();
+  if (!user) return { success: false, error: "❌ User not authenticated." };
+
+  const userId = user.id; // ✅ Get the authenticated user's ID
+
   const file = formData.get("resume") as File;
   if (!file) return { success: false, error: "❌ No file uploaded." };
 
@@ -21,7 +28,7 @@ export async function uploadResume(formData: FormData) {
   }
 
   const fileExtension = file.name.split(".").pop();
-  const fileName = `resumes/${uuidv4()}.${fileExtension}`;
+  const fileName = `resumes/${userId}/${uuidv4()}.${fileExtension}`; // ✅ Associate file with userId
 
   try {
     // Convert File to Buffer
@@ -39,7 +46,7 @@ export async function uploadResume(formData: FormData) {
 
     const fileUrl = `https://${process.env.AWS_S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileName}`;
 
-    return { success: true, fileName, fileUrl };
+    return { success: true, fileName, fileUrl, userId }; // ✅ Return userId for reference
   } catch (error) {
     console.error("S3 Upload Error:", error);
     return { success: false, error: "❌ File upload failed. Please try again." };

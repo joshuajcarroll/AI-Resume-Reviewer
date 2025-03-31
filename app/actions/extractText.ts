@@ -1,15 +1,24 @@
 "use server";
 
 import { TextractClient, StartDocumentTextDetectionCommand, GetDocumentTextDetectionCommand } from "@aws-sdk/client-textract";
+import { currentUser } from "@clerk/nextjs/server"; // ✅ Get logged-in user
 
 const textract = new TextractClient({ region: process.env.AWS_REGION! });
+
 export async function extractTextFromResume(fileName: string): Promise<string> {
   try {
+    // ✅ Get logged-in user
+    const user = await currentUser();
+    if (!user) throw new Error("❌ User not authenticated.");
+
+    const userId = user.id;
+    const filePath = `resumes/${userId}/${fileName}`; // ✅ Ensure correct file path
+
     const params = {
       DocumentLocation: {
         S3Object: {
           Bucket: process.env.AWS_S3_BUCKET_NAME!,
-          Name: fileName,
+          Name: filePath, // ✅ Use the user-specific file path
         },
       },
     };
