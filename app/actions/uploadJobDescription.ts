@@ -1,14 +1,26 @@
 "use server";
 
-import { createClient } from "@supabase/supabase-js";
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
+import { cookies } from "next/headers";
 
 // Initialize Supabase client
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_ANON_KEY!
-);
+const supabase = createServerComponentClient({ cookies });
 
-export async function uploadJobDescription(jobDescription: string, userId: string) {
+async function getUserId() {
+  // Await the cookies() to fetch the current session
+  const { data: { user } } = await supabase.auth.getUser();
+  return user?.id || null;
+}
+
+export async function uploadJobDescription(jobDescription: string) {
+  // Get the userId from the authentication context
+  const userId = await getUserId();
+
+  // Check if the user is authenticated
+  if (!userId) {
+    return { success: false, error: "❌ Unauthorized: No user found." };
+  }
+
   try {
     // Insert job description into Supabase
     const { data, error } = await supabase
@@ -19,7 +31,7 @@ export async function uploadJobDescription(jobDescription: string, userId: strin
       throw new Error(error.message);
     }
 
-    return { success: true, jobId: data[0].id};
+    return { success: true, jobId: data[0].id };
   } catch (error) {
     console.error("Error uploading job description:", error);
     return { success: false, error: "❌ Failed to upload job description." };
