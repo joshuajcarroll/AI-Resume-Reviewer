@@ -325,8 +325,10 @@ import { useState } from "react";
 import { uploadResume } from "@/app/actions/uploadResume";
 import { extractTextFromResume } from "@/app/actions/extractText";
 import { uploadJobDescription } from "@/app/actions/uploadJobDescription";
+import { useUser } from "@clerk/nextjs"; // ✅ Import authentication hook
 
 export default function ResumeUploader() {
+  const { user } = useUser(); // ✅ Get the logged-in user
   const [resume, setResume] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState<string | null>(null);
@@ -341,6 +343,12 @@ export default function ResumeUploader() {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+
+    if (!user) {
+      setProgress("❌ User not authenticated.");
+      return;
+    }
+
     if (!resume) {
       setProgress("❌ Please upload a resume.");
       return;
@@ -351,6 +359,7 @@ export default function ResumeUploader() {
 
     const formData = new FormData();
     formData.append("resume", resume);
+    formData.append("userId", user.id); // ✅ Attach user ID
 
     const uploadResult = await uploadResume(formData);
     if (!uploadResult.success) {
@@ -367,8 +376,8 @@ export default function ResumeUploader() {
       return;
     }
 
-    const textResult = await extractTextFromResume(uploadResult.fileName);
-    
+    const textResult = await extractTextFromResume(user.id, uploadResult.fileName); // ✅ Pass user ID
+
     if (textResult.startsWith("Error")) {
       setProgress("❌ Text extraction failed.");
       setExtractedText(null);
@@ -382,10 +391,14 @@ export default function ResumeUploader() {
   };
 
   const handleJobDescriptionSubmit = async () => {
+    if (!user) {
+      setProgress("❌ User not authenticated.");
+      return;
+    }
+
     setProgress("⏳ Saving job description...");
-    
-    //const userId = "user123"; Replace with actual user ID from authentication
-    const result = await uploadJobDescription(jobDescription);
+
+    const result = await uploadJobDescription(user.id, jobDescription); // ✅ Pass user ID
 
     if (result.success) {
       setProgress("✅ Job description saved successfully!");
